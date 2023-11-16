@@ -73,7 +73,7 @@ public class BilleteraService {
 
 //        rabbitTemplate.convertAndSend(requestUsuarioQueue,operacion.getDniComprador());
         rabbitTemplate.convertAndSend(bancoExchange,"request",operacion.getDniComprador());
-        Message receive = rabbitTemplate.receive(responseUsuarioQueue, 6000);
+        Message receive = rabbitTemplate.receive(responseUsuarioQueue,3000);
         if(receive != null){
             byte[] cuerpoMensaje = receive.getBody();
             boolean existencia = Boolean.parseBoolean(new String(cuerpoMensaje));

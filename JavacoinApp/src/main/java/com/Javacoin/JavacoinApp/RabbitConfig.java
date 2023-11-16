@@ -119,6 +119,7 @@ public class RabbitConfig {
                 .with("request");
     }
 
+    @Bean
     public Binding ordenQueueBinding(){
         return BindingBuilder
                 .bind(ordenQueue())
@@ -126,11 +127,12 @@ public class RabbitConfig {
                 .with("orden");
     }
 
+    @Bean
     public Binding responseQueueBinding(){
         return BindingBuilder
                 .bind(responseUsuarioQueue())
                 .to(bancoExchange())
-                .with("orden");
+                .with("response");
     }
     @Bean
     public MessageConverter converter(){

@@ -18,6 +18,8 @@ public class JavacoinAppApplication {
 		bancoService.crearCuenta(12345678L,50);
 		bancoService.crearCuenta(87654321L,0);
 		billeteraService.crearBilletera(87654321L,20);
+
+
 	}
 
 }
