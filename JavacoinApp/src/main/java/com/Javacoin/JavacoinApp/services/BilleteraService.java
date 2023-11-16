@@ -43,7 +43,7 @@ public class BilleteraService {
     @Value("${javacoin.exchange.respuesta}")
     private String respuestaExchange;
 
-    @Value("${javacoin.exchange.respuesta}")
+    @Value("${javacoin.exchange.banco}")
     private String bancoExchange;
 
     private List<Operacion> solicitudesOperacion = new ArrayList<>();
@@ -70,9 +70,9 @@ public class BilleteraService {
     private void procesarCompra(Operacion operacion) {
         LOGGER.info(String.format("compra recibida por BilleteraService -> %s", operacion.toString()));
 
-//        boolean existencia = (boolean) rabbitTemplate.convertSendAndReceive(bancoExchange,"request",operacion);
 
-        rabbitTemplate.convertAndSend(requestUsuarioQueue,operacion.getDniComprador());
+//        rabbitTemplate.convertAndSend(requestUsuarioQueue,operacion.getDniComprador());
+        rabbitTemplate.convertAndSend(bancoExchange,"request",operacion.getDniComprador());
         Message receive = rabbitTemplate.receive(responseUsuarioQueue, 6000);
         if(receive != null){
             byte[] cuerpoMensaje = receive.getBody();
@@ -113,7 +113,8 @@ public class BilleteraService {
         long nroOrden = generarNroOrdenAleatorio();
         Orden ordenCreada = new Orden(nroOrden, operacion.getDniComprador(), operacion.getJavacoin());
         ordenes.put(nroOrden, ordenCreada);
-        rabbitTemplate.convertAndSend(respuestaQueue, String.format("Orden de compra creada - Número: %s", ordenCreada.getNroOrden()));
+//        rabbitTemplate.convertAndSend(respuestaQueue, String.format("Orden de compra creada - Número: %s", ordenCreada.getNroOrden()));
+        rabbitTemplate.convertAndSend(respuestaExchange,"respuesta",String.format("Orden de compra creada - Número: %s", ordenCreada.getNroOrden()));
     }
 
 
