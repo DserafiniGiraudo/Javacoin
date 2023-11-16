@@ -37,6 +37,9 @@ public class RabbitConfig {
     @Value("${javacoin.exchange.respuesta}")
     private String respuestaExchange;
 
+    @Value(("${javacoin.exchange.banco}"))
+    private String bancoExchange;
+
     @Bean
     public Queue bancoQueue(){
         return new Queue(bancoQueue);
@@ -69,6 +72,9 @@ public class RabbitConfig {
     public DirectExchange respuestaExchange(){
         return new DirectExchange(respuestaExchange);
     }
+
+    @Bean
+    public DirectExchange bancoExchange(){return new DirectExchange(bancoExchange);}
 
     @Bean
     public Binding bancoQueueBindingCompra(){
@@ -104,6 +110,27 @@ public class RabbitConfig {
                 .bind(respuestaQueue())
                 .to(respuestaExchange())
                 .with("respuesta");
+    }
+    @Bean
+    public Binding requestUsuarioQueueBinding(){
+        return BindingBuilder
+                .bind(requestUsuarioQueue())
+                .to(bancoExchange())
+                .with("request");
+    }
+
+    public Binding ordenQueueBinding(){
+        return BindingBuilder
+                .bind(ordenQueue())
+                .to(bancoExchange())
+                .with("orden");
+    }
+
+    public Binding responseQueueBinding(){
+        return BindingBuilder
+                .bind(responseUsuarioQueue())
+                .to(bancoExchange())
+                .with("orden");
     }
     @Bean
     public MessageConverter converter(){

@@ -29,6 +29,9 @@ public class BancoService {
     @Value("${javacoin.exchange.respuesta}")
     private String respuestaExchange;
 
+    @Value("${javacoin.exchange.banco}")
+    private String bancoExchange;
+
     @Value("${javacoin.colas.responseUsuarioQueue}")
     private String responseUsuarioQueue;
 
@@ -78,7 +81,8 @@ public class BancoService {
     private void existeUsuarioEnBanco(long dniUsuario){
 
        boolean existencia = cuentas.containsKey(dniUsuario);
-       rabbitTemplate.convertAndSend(responseUsuarioQueue,existencia);
+//       rabbitTemplate.convertAndSend(responseUsuarioQueue,existencia);
+        rabbitTemplate.convertAndSend(bancoExchange,"response",existencia);
     }
 
 
