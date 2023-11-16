@@ -7,10 +7,7 @@ import com.Javacoin.JavacoinApp.models.Orden;
 import com.Javacoin.JavacoinApp.services.BancoService;
 import com.Javacoin.JavacoinApp.services.BilleteraService;
 import com.Javacoin.JavacoinApp.services.ProductorService;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.QueueInformation;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
@@ -57,8 +54,24 @@ class JavacoinAppApplicationTests {
     private RabbitListenerEndpointRegistry rabbitListenerEndpointRegistry;
     @Autowired
     private Queue bancoQueue;
+
     @Autowired
     private Queue billeteraQueue;
+
+    @Autowired
+    private Queue errorQueue;
+
+    @Autowired
+    private Queue respuestaQueue;
+
+    @Autowired
+    private Queue ordenQueue;
+
+    @Autowired
+    private Queue requestUsuarioQueue;
+
+    @Autowired
+    private Queue responseUsuarioQueue;
     @Value("${javacoin.servicios.tiempoEspera}")
     private int tiempoEspera;
 
@@ -80,16 +93,26 @@ class JavacoinAppApplicationTests {
         operacion.setJavacoin(2.0);
         operacion.setCotizacion(5.0);
         operacion.setTipo(Operacion.Tipo.COMPRA);
+
     }
 
     @BeforeEach
     void setUp() {
-        rabbitAdmin.purgeQueue(bancoQueue.getName());
-        rabbitAdmin.purgeQueue(billeteraQueue.getName());
+        limpiarTodasLasColas();
         bancoService.limpiarLista();
         billeteraService.limpiarLista();
         stopBilleteraListener();
         stopBancoListener();
+    }
+
+    private void limpiarTodasLasColas() {
+        rabbitAdmin.purgeQueue(bancoQueue.getName());
+        rabbitAdmin.purgeQueue(billeteraQueue.getName());
+        rabbitAdmin.purgeQueue(errorQueue.getName());
+        rabbitAdmin.purgeQueue(respuestaQueue.getName());
+        rabbitAdmin.purgeQueue(ordenQueue.getName());
+        rabbitAdmin.purgeQueue(requestUsuarioQueue.getName());
+        rabbitAdmin.purgeQueue(responseUsuarioQueue.getName());
     }
 
     @Test
@@ -109,11 +132,6 @@ class JavacoinAppApplicationTests {
         await()
                 .atMost(Duration.ofSeconds(tiempoEspera))
                 .until(() -> colaTieneMensajes(bancoQueue) && colaTieneMensajes(billeteraQueue));
-//        try{
-//            Thread.sleep(6000);
-//        } catch (InterruptedException e) {
-//            Thread.currentThread().interrupt();
-//        }
 
         int cantMensajesBanco = cantidadMensajesCola(bancoQueue);
         int cantMensajesBilletera = cantidadMensajesCola(billeteraQueue);
@@ -125,11 +143,7 @@ class JavacoinAppApplicationTests {
         startBilleteraListener();
 
         await().atMost(tiempoEspera, SECONDS).until(() -> bancoService.cantSolicitudesCompraRecibidas() > 0 && billeteraService.cantSolicitudesCompraRecibidas() > 0);
-//		try{
-//            Thread.sleep(6000);
-//        } catch (InterruptedException e) {
-//           Thread.currentThread().interrupt();
-//        }
+
         assertThat(bancoService.cantSolicitudesCompraRecibidas()).isEqualTo(1);
         assertThat(billeteraService.cantSolicitudesCompraRecibidas()).isEqualTo(1);
     }
@@ -139,20 +153,15 @@ class JavacoinAppApplicationTests {
 
         compradorService.comprarJavacoin(operacion);
 
-        try{
-            Thread.sleep(6000);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+        await()
+                .atMost(Duration.ofSeconds(tiempoEspera))
+                .until(() -> colaTieneMensajes(bancoQueue) && colaTieneMensajes(billeteraQueue));
 
         startBancoListener();
         startBilleteraListener();
         startOperacionListener();
-        try{
-            Thread.sleep(6000);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+
+        await().atMost(tiempoEspera, SECONDS).until(() -> bancoService.cantSolicitudesCompraRecibidas() > 0 && billeteraService.cantSolicitudesCompraRecibidas() > 0);
 
         nroOrden = billeteraService.getNroOrdenes().stream().findFirst().get();
         Orden orden = billeteraService.getOrden(nroOrden);
@@ -169,6 +178,8 @@ class JavacoinAppApplicationTests {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
+
+
 
         Billetera billeteraVendedor = billeteraService.getBilletera(orden.getDniVendedor());
         Billetera billeteraComprador = billeteraService.getBilletera(orden.getDniComprador());

@@ -36,7 +36,6 @@ public class BancoService {
     private String responseUsuarioQueue;
 
     @RabbitListener(id = "bancoListener", queues = {"${javacoin.colas.bancoQueue}"})
-    @Transactional
     public void consumirSolicitud(Operacion operacion) {
 
         try {
